@@ -228,7 +228,7 @@ def query_emails(request: Request, db_session: database.DBSession, user_id: str 
 
         for email in user_emails:
             new_job_title = normalize_job_title(email.job_title)
-            if email.normalized_job_title != new_job_title:
+            if new_job_title is not None and email.normalized_job_title != new_job_title:
                 email.normalized_job_title = new_job_title
                 db_session.add(email)
                 db_session.commit()

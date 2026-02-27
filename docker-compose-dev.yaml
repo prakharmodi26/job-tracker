@@ -9,6 +9,8 @@ services:
     environment:
       - IS_DOCKER_CONTAINER=1
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/jobseeker_analytics
+    networks:
+      - proxy
     depends_on:
       db:
         condition: service_healthy
@@ -21,6 +23,9 @@ services:
       dockerfile: Dockerfile.dev  # Use a specific Dockerfile for development (e.g., Dockerfile.dev)
     ports:
       - "3000:3000"  # Map host port 3000 to container port 3000
+    
+    networks:
+      - proxy
     volumes:
       - ./frontend:/app  # Mount the entire frontend directory for live code updates (including components, etc.)
       - /app/node_modules  # Prevent overwriting of node_modules in the container
@@ -48,5 +53,7 @@ services:
       - ./backend/db/init.sql:/docker-entrypoint-initdb.d/init.sql
 
 
+networks:
+  - proxy
 volumes:
   postgres_data:

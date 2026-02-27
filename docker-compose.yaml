@@ -1,31 +1,37 @@
 services:
-  backend:
-    build: ./backend  # Point to the backend folder where the Dockerfile is located
-    ports:
-      - "8000:8000"  # Map host port 8000 to container port 8000
+  job-tracker-backend:
+    build: ./backend
+    container_name: job-tracker-backend
     volumes:
-      - ./backend:/app # Mount backend directory for live code updates
-    env_file: "./backend/.env"  # Use the .env file inside backend
+      - ./backend:/app
+    env_file: "./backend/.env"
     environment:
       - IS_DOCKER_CONTAINER=1
+    networks:
+      - proxy
+      - internal
     depends_on:
       db:
         condition: service_healthy
-    restart: always  # Restart container if it crashes
+    restart: always
 
-  frontend:
-    build: ./frontend  # Point to the frontend folder where the Dockerfile is located
-    ports:
-      - "3000:3000"  # Map host port 3000 to container port 3000
+  job-tracker-frontend:
+    build:
+      context: ./frontend
+      args:
+        NEXT_PUBLIC_API_URL: https://job.prakharmodi.me/backend
+        NEXT_PUBLIC_APP_URL: https://job.prakharmodi.me
+    container_name: job-tracker-frontend
     env_file: "./frontend/.env"
+    networks:
+      - proxy
     environment:
       - NODE_ENV=production
     restart: always
 
   db:
-    image: postgres:13  # Use the official PostgreSQL image
-    ports:
-      - "5433:5432"  # Map host port 5433 to container port 5432
+    image: postgres:13
+    container_name: job-tracker-db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -35,10 +41,17 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    networks:
+      - internal
     volumes:
-      - postgres_data:/var/lib/postgresql/data  # Persist database data
+      - postgres_data:/var/lib/postgresql/data
       - ./backend/db/init.sql:/docker-entrypoint-initdb.d/init.sql
 
+networks:
+  proxy:
+    external: true
+  internal:
+    driver: bridge
 
 volumes:
   postgres_data:
